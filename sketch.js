@@ -1,7 +1,7 @@
 var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed = false, restart, rb, homeplanetimg = [], curtime = [];
 var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "mainmenu", bu;
-var isSaved, isSavedcheck, savecol, oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [];
-var maxfuel = 85, maxoxygen = 80, button1, button2;
+var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
+var button2;
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -55,8 +55,6 @@ function setup() {
   rb.visible = false;
 
   frameRate(60);
-
-  //isSavedcheck = localStorage.getItem("isSaved");
 }
 
 function draw(){
@@ -146,11 +144,21 @@ function hmplt(){
   var roundedwater = map(waterlvl,0,plmaxcol,0,100);
   var roundedplants = map(plantslvl,0,plmaxcol,0,100);
 
+  if(roundedenergy > 95){
+    roundedenergy = 100;
+  }
+  if(roundedwater > 95){
+    roundedwater = 100;
+  }
+  if(roundedplants > 95){
+    roundedplants = 100;
+  }
+
   fill(255);
   textFont("Copperplate");
-  text("energy: " + roundedenergy + "%", homeplanet.x - 80, homeplanet.y - 100);
-  text("water: " + roundedwater + "%", homeplanet.x - 60, homeplanet.y);
-  text("oxygen: " + roundedplants + "%", homeplanet.x - 80, homeplanet.y + 100);
+  text("energy: " + round(roundedenergy) + "%", homeplanet.x - 80, homeplanet.y - 100);
+  text("water: " + round(roundedwater) + "%", homeplanet.x - 60, homeplanet.y);
+  text("oxygen: " + round(roundedplants) + "%", homeplanet.x - 80, homeplanet.y + 100);
 }
 
 function player(){ 
@@ -168,6 +176,8 @@ function player(){
 
   ship.rotation = shipa;
 
+  if(fuellvl > 0){
+
   //right rotation
   if(keyIsDown(RIGHT_ARROW) || keyIsDown(68)){
     shipa += 10;
@@ -180,7 +190,7 @@ function player(){
 
   //thrust
   if(keyIsDown(UP_ARROW) || keyIsDown(87) || keyIsDown(32)){
-   ship.setSpeed(10, shipa - 90);
+    ship.setSpeed(10, shipa - 90);
   }
   else{
     ship.setSpeed(0, shipa);
@@ -196,6 +206,11 @@ function player(){
     shipa += 0;
     isfpressed = false;
     }
+  }
+  }
+  else{
+    ship.velocityX = 0;
+    ship.velocityY = 0;
   }
 
   if(shipa > 360){
@@ -229,54 +244,63 @@ function spawnPlanets(){
    switch(i){
     case 0:
       createplanets.setCollider("circle",0,0,290);  
+      spawncollectables(2,0,0,0,0);
       oxylvl = 60;
       fullvl = 85;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 1:
       createplanets.setCollider("circle",0,0,340);
+      spawncollectables(0,0,2,0,1);
       oxylvl = 85;
       fullvl = 100;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 2:
       createplanets.setCollider("circle",0,0,345);
+      spawncollectables(0,1,0,1,2);
       oxylvl = 100;
       fullvl = 120;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 3:
       createplanets.setCollider("circle",0,0,195);
+      spawncollectables(1,0,0,0,3);//2 moons
       oxylvl = 120;
       fullvl = 140;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 4:
       createplanets.setCollider("circle",0,0,340);
+      spawncollectables(0,2,0,0,4);//1 moon
       oxylvl = 135;
       fullvl = 150;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 5:
       createplanets.setCollider("circle",0,-13,245);
+      spawncollectables(0,0,0,2,5);
       oxylvl = 150;
       fullvl = 160;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 6:
       createplanets.setCollider("circle",0,0,295);
+      spawncollectables(0,2,0,0,6);
       oxylvl = 250;
       fullvl = 205;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 7:
       createplanets.setCollider("circle",-25,20,330);
+      spawncollectables(0,2,0,0,7);
       oxylvl = 280;
       fullvl = 235;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 8:
       createplanets.setCollider("circle",35,-15,330);
+      spawncollectables(2,0,0,0,8);
       oxylvl = 300;
       fullvl = 350;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -289,43 +313,49 @@ function spawnPlanets(){
       break;
     case 10:
       createplanets.setCollider("circle",0,0,275);
+      spawncollectables(0,0,0,2,10);
       oxylvl = 340;
       fullvl = 360;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 11:
       createplanets.setCollider("circle",0,10,325);
+      spawncollectables(0,0,0,2,11);
       oxylvl = 400;
       fullvl = 410;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 12:
       createplanets.setCollider("circle",0,0,325);
+      spawncollectables(0,0,3,0,12);
       oxylvl = 420;
       fullvl = 430;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 13:
       createplanets.setCollider("circle",0,0,325);
+      spawncollectables(2,0,0,0,13);
       oxylvl = 430;
       fullvl = 430;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 14:
       createplanets.setCollider("circle",-20,0,325);
+      spawncollectables(0,5,0,0,14);
       oxylvl = 437;
       fullvl = 442;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 15:
       createplanets.setCollider("circle",0,0,325);
+      spawncollectables(5,0,0,0,15);
       oxylvl = 442;
       fullvl = 450;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 16:
       createplanets.setCollider("circle",-33,-13,333);
-      spawncollectables(3,3,0,3,16);
+      spawncollectables(0,0,0,5,16);
       oxylvl = 450;
       fullvl = 461;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -452,17 +482,12 @@ function hideplanets(){
 }
 
 function spawncollectables(plants, water, o2, energy, planetno){
+  planetno *= 3;
   var touched = 0;
-  for(var i = 0; i < planets.length; i += 3){
-    switch(i){
-      case 0:
-        tp = 1;
-        tw = 1;
-        to2 = 1;
-        te = 1;
-        planetno = 0;
-    }
-  }
+  var tp = plants;
+  var tw = water;
+  var to2 = o2;
+  var te = energy;
   for(var p = 0; p < tp; p++){
     var plants = createSprite(planets[planetno].x, planets[planetno].y, 20, 20);
     plants.scale = 0.04;
@@ -562,7 +587,7 @@ function movecollectables(){
       collft[i].scale = collft[i].scale - 0.0005
     }
 
-    if(keyIsDown(16) && collft[i+1].type === "oxygen" && collft[i+1].onship === 1){
+    if(keyIsDown(16) && collft[i+1].type === "oxygen" && collft[i+1].onship === 1 && mousePressedOver(collft[i])){
       collft[i+1].ani = 1;
       collft[i+1].destroy = 1;
     }
@@ -580,7 +605,7 @@ function movecollectables(){
       if(collft[i+1].type === "oxygen"){
         if(collft[i+1].destroy === 1){
           collft[i].destroy();
-          oxygenlvl += 75;
+          oxygenlvl += 40;
         }
         else{
           collft[i].scale = 0.05;
@@ -595,18 +620,18 @@ function movecollectables(){
        var type = collft[i+1].type;
        if(type === "water"){
          collft[i].destroy();
-          waterlvl += 30;
+          waterlvl += 40;
           localStorage.setItem('col'+i, 2);
         }
        if(type === "energy"){
           collft[i].destroy();
-          energylvl += 30;
+          energylvl += 40;
           localStorage.setItem('col'+i, 3);
         }
         if(type === "plants"){
           collft[i].destroy();
           localStorage.setItem('col'+i, 4);
-          plantslvl += 30;
+          plantslvl += 40;
         }
       }
       if(localStorage.getItem('col'+i) === null){
@@ -623,13 +648,13 @@ function movecollectables(){
 
 function oxynful() {
   if(Math.round(ship.x) != Math.round(lastshipposx) || Math.round(ship.y) != Math.round(lastshipposy)){
-    fuellvl -= 0.035;
+    //fuellvl -= 0.035;
     lastshipposx = ship.x;
     lastshipposy = ship.y;
   }
 
   if(frameCount % 6 === 0){
-    oxygenlvl -= 0.2;
+    //oxygenlvl -= 0.2;
   }
 
   if(oxygenlvl <= 0){
