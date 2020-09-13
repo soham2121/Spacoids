@@ -1,7 +1,7 @@
 var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed = false, restart, rb, homeplanetimg = [], curtime = [];
-var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "mainmenu", bu;
+var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "play", bu;
 var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
-var button2;
+var button2, moonimg, moonarr = [];
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -13,6 +13,8 @@ function preload(){
   oxyimg = loadImage("sprites/oxygen.png");
 
   energyimg = loadImage("sprites/energy.png");
+
+  moonimg = loadImage("sprites/moon.png");
 
   for(var i = 1; i <= 3; i++){
     var hmpltimg = loadImage("sprites/prt" + i + ".png");
@@ -94,6 +96,7 @@ function draw(){
     hideplanets();
     oxynful();
     hmplt();
+    mmf();
     }
   }
   else if(gameState === "end"){
@@ -265,14 +268,17 @@ function spawnPlanets(){
       break;
     case 3:
       createplanets.setCollider("circle",0,0,195);
-      spawncollectables(1,0,0,0,3);//2 moons
+      spawncollectables(1,0,0,0,3);
+      spawnmoon();
+      spawnmoon();
       oxylvl = 120;
       fullvl = 140;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
       break;
     case 4:
       createplanets.setCollider("circle",0,0,340);
-      spawncollectables(0,2,0,0,4);//1 moon
+      spawncollectables(0,2,0,0,4);
+      spawnmoon();
       oxylvl = 135;
       fullvl = 150;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -413,11 +419,35 @@ function allmovement(){
         planets[18].x = -2976*1.5;
         planets[18].y = -4188*1.5;
       case 21: 
-        planets[18].x = -2976*1.5;
-        planets[18].y = -4188*1.5;
+        planets[21].x = 994*1.5;
+        planets[21].y = -5879*1.5;
       case 24: 
-        planets[18].x = -5414*1.5;
-        planets[18].y = -6122*1.5;
+        planets[24].x = -5414*1.5;
+        planets[24].y = -6122*1.5;
+      case 27:
+        planets[27].x = -1646*1.5;
+        planets[27].y = -8066*1.5;
+      case 30:
+        planets[27].x = 6208*1.5;
+        planets[27].y = -6959*1.5
+      case 33:
+        planets[33].x = -4274*1.5;
+        planets[33].y = -11676*1.5
+      case 36:
+        planets[36].x = 8008*1.5;
+        planets[36].y = -10567*1.5;
+      case 39:
+        planets[39].x = 1932*1.5;
+        planets[39].y = -14416*1.5;
+      case 42:
+        planets[42].x = 1870*1.5;
+        planets[42].y = -17922*1.5;
+      case 45:
+        planets[45].x = 4172*1.5;
+        planets[45].y = -17920*1.5;
+      case 48:
+        planets[48].x = 4450*1.5;
+        planets[48].y = -22085*1.5;
     }
     //var rndoxylvl = map(plntscollvls[0].oxy, 0, plntscollvls[0].oxy, 0, 100);
     //var rndfullvl = map(plntscollvls[0].ful, 0, plntscollvls[0].ful, 0, 100);
@@ -587,7 +617,7 @@ function movecollectables(){
       collft[i].scale = collft[i].scale - 0.0005
     }
 
-    if(keyIsDown(16) && collft[i+1].type === "oxygen" && collft[i+1].onship === 1 && mousePressedOver(collft[i])){
+    if(keyIsDown(16) && collft[i+1].type === "oxygen" && collft[i+1].onship === 1 || mousePressedOver(collft[i])){
       collft[i+1].ani = 1;
       collft[i+1].destroy = 1;
     }
@@ -648,13 +678,13 @@ function movecollectables(){
 
 function oxynful() {
   if(Math.round(ship.x) != Math.round(lastshipposx) || Math.round(ship.y) != Math.round(lastshipposy)){
-    //fuellvl -= 0.035;
+    fuellvl -= 0.035;
     lastshipposx = ship.x;
     lastshipposy = ship.y;
   }
 
   if(frameCount % 6 === 0){
-    //oxygenlvl -= 0.2;
+    oxygenlvl -= 0.2;
   }
 
   if(oxygenlvl <= 0){
@@ -719,4 +749,40 @@ function reset(){
   ship.x = homeplanet.x ;
   ship.y = homeplanet.y;
   gameState = "mainmenu";
+}
+
+function spawnmoon(){
+  var moon = createSprite(0,0,20,20);
+  moon.setCollider("circle", 0,0,200)
+  moon.scale = 0.25;
+  var a = createSprite(moon.x,moon.y,1,1);
+  moon.addImage("moon", moonimg);
+  var randomrot = random(0,360);
+  var randomdist = random(300,400);
+  var distbet = round(random(2,5));
+  moonarr.push(moon, {rot: randomrot, dist: randomdist, dis: distbet}, a);
+}
+
+function movemoon(planetno, moonnum){
+  planetno *= 3;
+  ship.collide(moonarr[moonnum]);
+  var dist = moonarr[moonnum+1].dis;
+  moonarr[moonnum].x = planets[planetno].x + (cos(moonarr[moonnum+2].rotation + moonarr[moonnum+1].rot) * (moonarr[moonnum+1].dist*dist));
+  moonarr[moonnum].y = planets[planetno].y + (sin(moonarr[moonnum+2].rotation + moonarr[moonnum+1].rot) * (moonarr[moonnum+1].dist*dist));
+  moonarr[moonnum+2].rotation += 1;
+  if(moonarr[moonnum].x > ship.x + displayWidth / 2 || moonarr[moonnum].x < ship.x - displayWidth / 2 ||
+    moonarr[moonnum].y > ship.y + displayHeight / 2 || moonarr[moonnum].y < ship.y - displayHeight / 2){
+    moonarr[moonnum].visible = false;
+    moonarr[moonnum+2].visible = false;
+  }
+  else{
+    moonarr[moonnum].visible = true;
+    moonarr[moonnum+2].visible = true;
+  }
+}
+
+function mmf(){
+  movemoon(4,0);
+  movemoon(4,3);
+  movemoon(5,6);
 }
