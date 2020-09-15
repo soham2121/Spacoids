@@ -23,7 +23,7 @@ function preload(){
 }
 
 function setup() {
-  createCanvas(displayWidth-5, displayHeight-120);
+  createCanvas(displayWidth-10, displayHeight-120);
 
   angleMode(DEGREES); 
 
@@ -38,8 +38,9 @@ function setup() {
   hometrig = createSprite(0, 0, 1, 1);
   hometrig.setCollider("circle", 0, 0, 510);
 
-  restart = createSprite(ship.x, ship.y, 100, 50);
+  restart = createSprite(ship.x, ship.y, 200, 50);
   restart.depth = ship.depth + 1;
+  restart.shapeColor = rgb(20,25,255);
   restart.visible = false;
 
   button1 = createSprite(ship.x, ship.y, 200, 50);
@@ -92,16 +93,22 @@ function draw(){
     }
     if(frameCount > 1){
     player();
+    getTime();
     allmovement();
     hideplanets();
     oxynful();
     hmplt();
-    mmf();
     }
+  }
+  if(gameState === "survival"){
+
   }
   else if(gameState === "end"){
     fill(255);
-    text("Restart", restart.x - 17, restart.y);
+    textSize(20);
+    text("Restart", restart.x - 30, restart.y);
+    textSize(50);
+    text("GameOver", restart.x - 120, restart.y - 80);
     ship.velocityX = 0;
     ship.velocityY = 0;
     rb.visible = true;
@@ -117,7 +124,16 @@ function draw(){
   }
 }
 
-async function getTime(){
+function getTimeForplnt(i){
+  var m = minute();
+  var h = hour();
+  var s = second();
+  localStorage.setItem(i+'planethr',h+1);
+  localStorage.setItem(i+'planetsec',s+1);
+  localStorage.setItem(i+'planetmin',m+1);
+}
+
+function getTime(i){
   curtime = [];
   var m = minute();
   var h = hour();
@@ -193,7 +209,7 @@ function player(){
 
   //thrust
   if(keyIsDown(UP_ARROW) || keyIsDown(87) || keyIsDown(32)){
-    ship.setSpeed(10, shipa - 90);
+    ship.setSpeed(15, shipa - 90);
   }
   else{
     ship.setSpeed(0, shipa);
@@ -269,8 +285,8 @@ function spawnPlanets(){
     case 3:
       createplanets.setCollider("circle",0,0,195);
       spawncollectables(1,0,0,0,3);
-      spawnmoon();
-      spawnmoon();
+      // spawnmoon();
+      // spawnmoon();
       oxylvl = 120;
       fullvl = 140;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -278,7 +294,7 @@ function spawnPlanets(){
     case 4:
       createplanets.setCollider("circle",0,0,340);
       spawncollectables(0,2,0,0,4);
-      spawnmoon();
+      //spawnmoon();
       oxylvl = 135;
       fullvl = 150;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -372,25 +388,47 @@ function spawnPlanets(){
 
 function allmovement(){
   for(var i = 0; i < planets.length; i+=3){
-    if(ship.collide(planets[i]) || ship.isTouching(planets[i])){
-      if(plntscollvls[i/3].regen === 0){
-        getTime();
-        plntscollvls[i/3].regentime[0].hour = curtime[0].hour + 1;
-        plntscollvls[i/3].regentime[0].min = curtime[0].min + 1;
-        plntscollvls[i/3].regentime[0].sec = curtime[0].sec;
-        plntscollvls[i/3].regen = 1;
+    if(localStorage.getItem(i+'planetregen') === null){
+      localStorage.setItem(i+'planetregen', 0)
+    }
+    if(plntscollvls[i/3].oxy < plntscollvls[i/3].maxoxy || plntscollvls[i/3].ful < plntscollvls[i/3].maxful){
+      if(localStorage.getItem(i+'planetregen') < 1){
+        getTimeForplnt(i);
+        localStorage.setItem(i+'planetregen',1)
+        console.log(localStorage.getItem(i+'planetregen'));
       }
     }
-    if(plntscollvls[i/3].regen != 0){
-      getTime();
-      if(curtime[0].min >= plntscollvls[i/3].regentime[0].min){
-        if(curtime[0].sec >= plntscollvls[i/3].regentime[0].sec){
-          plntscollvls[i/3].oxy = plntscollvls[i/3].maxoxy;
-          plntscollvls[i/3].ful = plntscollvls[i/3].maxful;
-          plntscollvls[i/3].regen = 0;
+    if(localStorage.getItem(i+'planetregen') > 0){
+      var sec = localStorage.getItem(i+'planetsec');
+      var min = localStorage.getItem(i+'planetmin');
+      var hr = localStorage.getItem(i+'planethr');
+      if(hr <= curtime[0].hour){
+        if(min <= curtime[0].min){
+          if(sec < curtime[0].sec){
+            localStorage.setItem(i+'plntoxy',plntscollvls[i/3].maxoxy);
+            localStorage.setItem(i+'plntful',plntscollvls[i/3].maxful);
+            localStorage.setItem(i+'planetregen',0);
+            localStorage.setItem(i+'planetsec',0);
+            localStorage.setItem(i+'planetmin',0);
+            localStorage.setItem(i+'planethr',0);
+            console.log("clear");
+          }
         }
       }
     }
+    if(localStorage.getItem(i+'planethr') > 24){
+      var r = localStorage.getItem(i+'planethr') % 12;
+      localStorage.setItem(i+'planethr',r);
+    }
+    if(localStorage.getItem(i+'planetsec') > 59){
+      var r = localStorage.getItem(i+'planetsec') % 60;
+      localStorage.setItem(i+'planetsec',r);
+    }
+    if(localStorage.getItem(i+'planetmin') > 59){
+      var r = localStorage.getItem(i+'planetmin') % 60;
+      localStorage.setItem(i+'planetmin',r);
+    }
+
     if(frameCount === 2){
       planets[i].x = cos(homeplanet.rotation) * (1600 * i + 1600);
       planets[i].y = sin(homeplanet.rotation) * (1600 * i + 1600);
@@ -451,9 +489,18 @@ function allmovement(){
     }
     //var rndoxylvl = map(plntscollvls[0].oxy, 0, plntscollvls[0].oxy, 0, 100);
     //var rndfullvl = map(plntscollvls[0].ful, 0, plntscollvls[0].ful, 0, 100);
+    var oxyplntlvl,fulplntlvl;
+    if(localStorage.getItem(i+'plntoxy') === null){
+      localStorage.setItem(i+'plntoxy',plntscollvls[i/3].oxy);
+      localStorage.setItem(i+'plntful',plntscollvls[i/3].ful);
+    }
+    else{
+      oxyplntlvl = localStorage.getItem(i+'plntoxy');
+      fulplntlvl = localStorage.getItem(i+'plntful');
+    }
     fill(0);
-    text("oxygen: " + plntscollvls[i/3].oxy + "%", planets[i].x - 80, planets[i].y - 20);
-    text("fuel: " + plntscollvls[i/3].ful + "%", planets[i].x - 60, planets[i].y + 20);
+    text("oxygen: " + oxyplntlvl + "%", planets[i].x - 80, planets[i].y - 20);
+    text("fuel: " + fulplntlvl + "%", planets[i].x - 60, planets[i].y + 20);
     if(plntscollvls[i/3].regen > 0){
       text("regenerating in 1hr", planets[i].x - 100, planets[i].y + 60);
     }
@@ -465,6 +512,7 @@ function allmovement(){
       if(oxygenlvl < maxoxygen && plntscollvls[i/3].oxy > 0){
         oxygenlvl += 1;
         plntscollvls[i/3].oxy -= 1;
+        localStorage.setItem(i+'plntoxy',plntscollvls[i/3].oxy);
       }
       else{
         oxygenlvl += 0;
@@ -473,6 +521,7 @@ function allmovement(){
       if(fuellvl < maxfuel && plntscollvls[i/3].ful > 0){
         fuellvl += 1;
         plntscollvls[i/3].ful -= 1;
+        localStorage.setItem(i+'plntful',plntscollvls[i/3].ful);
       }
       else{
         fuellvl += 0;
@@ -617,7 +666,11 @@ function movecollectables(){
       collft[i].scale = collft[i].scale - 0.0005
     }
 
-    if(keyIsDown(16) && collft[i+1].type === "oxygen" && collft[i+1].onship === 1 || mousePressedOver(collft[i])){
+    if(keyIsDown(16) && collft[i+1].type === "oxygen" && collft[i+1].onship === 1){
+      collft[i+1].ani = 1;
+      collft[i+1].destroy = 1;
+    }
+    if(mousePressedOver(collft[i]) && collft[i+1].onship === 1){
       collft[i+1].ani = 1;
       collft[i+1].destroy = 1;
     }
@@ -684,7 +737,7 @@ function oxynful() {
   }
 
   if(frameCount % 6 === 0){
-    oxygenlvl -= 0.2;
+    //oxygenlvl -= 0.2;
   }
 
   if(oxygenlvl <= 0){
@@ -751,38 +804,19 @@ function reset(){
   gameState = "mainmenu";
 }
 
-function spawnmoon(){
-  var moon = createSprite(0,0,20,20);
-  moon.setCollider("circle", 0,0,200)
-  moon.scale = 0.25;
-  var a = createSprite(moon.x,moon.y,1,1);
-  moon.addImage("moon", moonimg);
-  var randomrot = random(0,360);
-  var randomdist = random(300,400);
-  var distbet = round(random(2,5));
-  moonarr.push(moon, {rot: randomrot, dist: randomdist, dis: distbet}, a);
-}
-
-function movemoon(planetno, moonnum){
-  planetno *= 3;
-  ship.collide(moonarr[moonnum]);
-  var dist = moonarr[moonnum+1].dis;
-  moonarr[moonnum].x = planets[planetno].x + (cos(moonarr[moonnum+2].rotation + moonarr[moonnum+1].rot) * (moonarr[moonnum+1].dist*dist));
-  moonarr[moonnum].y = planets[planetno].y + (sin(moonarr[moonnum+2].rotation + moonarr[moonnum+1].rot) * (moonarr[moonnum+1].dist*dist));
-  moonarr[moonnum+2].rotation += 1;
-  if(moonarr[moonnum].x > ship.x + displayWidth / 2 || moonarr[moonnum].x < ship.x - displayWidth / 2 ||
-    moonarr[moonnum].y > ship.y + displayHeight / 2 || moonarr[moonnum].y < ship.y - displayHeight / 2){
-    moonarr[moonnum].visible = false;
-    moonarr[moonnum+2].visible = false;
-  }
-  else{
-    moonarr[moonnum].visible = true;
-    moonarr[moonnum+2].visible = true;
+function sm(number){
+  for(i = 0; i < number; i++){
+    var moon = createSprite(0,0,1,1);
+    moon.addImage("moon", moonimg);
+    moon.setCollider("circle",0,0,200);
+    moon.scale = 0.5;
+    var a = createSprite(0,0,1,1);
+    var rd = random(200,300);
+    var rr = random(0,359);
+    moonarr.push(moon,a,{dist: rd, rot: rr});
   }
 }
 
-function mmf(){
-  movemoon(4,0);
-  movemoon(4,3);
-  movemoon(5,6);
-}
+// function mm(planetno,moonno){
+//   moonarr[i]
+// }
