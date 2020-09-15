@@ -23,7 +23,7 @@ function preload(){
 }
 
 function setup() {
-  createCanvas(displayWidth-10, displayHeight-120);
+  createCanvas(displayWidth-30, displayHeight-150);
 
   angleMode(DEGREES); 
 
@@ -761,9 +761,9 @@ function oxynful() {
   var oxybar = map(oxygenlvl, 0, maxoxygen, 1, 101, true);
   var fulbar = map(fuellvl, 0, maxfuel, 1, 101, true);
   fill('rgba(0,255,0,0.5)');
-  rect(ship.x - displayWidth/2 + 20, ship.y + 230, oxybar*2, 20);
+  rect(ship.x - displayWidth/2 + 50, ship.y + 230, oxybar*2, 20);
   fill('rgba(255,0,0,0.5)');
-  rect(ship.x - displayWidth/2 + 20, ship.y + 300, fulbar*2, 20);
+  rect(ship.x - displayWidth/2 + 50, ship.y + 300, fulbar*2, 20);
 
   textFont("Copperplate");
 
@@ -773,7 +773,7 @@ function oxynful() {
   else{
     fill(255);
   }
-  text("oxygen level: " + Math.round(oxybar - 1), ship.x - displayWidth/2 + 20, ship.y + 220);
+  text("oxygen level: " + Math.round(oxybar - 1), ship.x - displayWidth/2 + 50, ship.y + 220);
 
   if(fuellvl < 30){
     fill(rgb(255,0,0));
@@ -781,7 +781,7 @@ function oxynful() {
   else{
     fill(255);
   }
-  text("fuel level: " + Math.round(fulbar - 1), ship.x - displayWidth/2 + 20, ship.y + 290);
+  text("fuel level: " + Math.round(fulbar - 1), ship.x - displayWidth/2 + 50, ship.y + 290);
 }
 
 function reset(){
