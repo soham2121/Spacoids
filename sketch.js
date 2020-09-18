@@ -1,7 +1,7 @@
 var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed = false, restart, rb, homeplanetimg = [], curtime = [];
 var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "play", bga = [];
 var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
-var button2, moonimg, moonarr = [], starimg, asster = [];
+var button2, moonimg, moonarr = [], starimg, asster = [], getp, gete, getw, plvl = 0, getlvl;
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -32,8 +32,16 @@ function setup() {
   ship = createSprite(750, 380, 30, 50);
   ship.scale = 0.3;
 
+  if(localStorage.getItem('level') === null){
+    localStorage.setItem('level', 0);
+    getlvl = localStorage.getItem('level');
+  }
+  else{
+    getlvl = localStorage.getItem('level');
+  }
+
   homeplanet = createSprite(0, 0, 50, 50);
-  homeplanet.addImage("plntprt1", homeplanetimg[0]);
+  homeplanet.addImage("plntprt1", homeplanetimg[plvl]);
   homeplanet.scale = 0.5;
   homeplanet.setCollider("circle",0,0,455);
 
@@ -60,6 +68,21 @@ function setup() {
   rb.visible = false;
 
   frameRate(60);
+
+  if(localStorage.getItem('energylvl') === null){
+    localStorage.setItem('energylvl',0);
+  }
+  if(localStorage.getItem('waterlvl') === null){
+    localStorage.setItem('waterlvl',0);
+  }
+  if(localStorage.getItem('plantslvl') === null){
+    localStorage.setItem('plantslvl',0);
+  }
+
+
+  gete = localStorage.getItem('energylvl');
+  getw = localStorage.getItem('waterlvl');
+  getp = localStorage.getItem('plantslvl');
 }
 
 function draw(){
@@ -94,16 +117,17 @@ function draw(){
       spawnPlanets();
       bg(50);
       spawnmoon(3);
+      console.log(homeplanetimg);
     }
     if(frameCount > 1){
-    player();
-    getTime();
-    allmovement();
-    hideplanets();
-    oxynful();
-    movebg();
-    hmplt();
-    mm(4,0);mm(4,3);mm(5,6);
+      player();
+      getTime();
+      allmovement();
+      hideplanets();
+      oxynful();
+      movebg();
+      hmplt();
+      mm(4,0);mm(4,3);mm(5,6);
     }
   }
   if(gameState === "survival"){
@@ -151,7 +175,42 @@ function getTime(){
 }
 
 function hmplt(){
+  if(frameCount === 5){
+    plantslvl += getp;
+    waterlvl += getw;
+    energylvl += gete
+  }
+
   ship.collide(homeplanet);
+
+  homeplanet.addImage("plntprt"+plvl,homeplanetimg[plvl]);
+
+  if(getlvl < plvl){
+    getlvl = plvl;
+    localStorage.setItem('level',plvl);
+  }
+  else if(plvl < getlvl){
+    plvl = getlvl;
+  }
+
+  if(parseInt(plvl) === 1){
+    homeplanet.setCollider("circle",-13,45,457);
+  }
+  if(parseInt(plvl) === 0 || parseInt(plvl) === 2){
+    homeplanet.setCollider("circle",0,0,455);
+  }
+
+  if(energylvl > 95 && plantslvl > 95 && waterlvl > 95){
+    plvl += 1;
+    console.log(plvl);
+    plantslvl = 0;
+    waterlvl = 0;
+    energylvl = 0;
+    localStorage.setItem('plantslvl',0);
+    localStorage.setItem('waterlvl',0);
+    localStorage.setItem('energylvl',0);
+    localStorage.setItem('level', plvl);
+  }
 
   if(ship.isTouching(hometrig)){
     if(keyIsDown(UP_ARROW) === false){
@@ -162,6 +221,25 @@ function hmplt(){
     ship.attractionPoint(0, homeplanet.x, homeplanet.y);
   }
 
+  if(plantslvl > 1000){
+    plantslvl = 80;
+  }
+  if(plantslvl > 100000){
+    plantslvl = 120;
+  }
+  if(waterlvl > 1000){
+    waterlvl = 80;
+  }
+  if(waterlvl > 100000){
+    waterlvl = 120;
+  }
+  if(energylvl > 1000){
+    energylvl = 80;
+  }
+  if(energylvl > 100000){
+    energylvl = 120;
+  }
+
   homeplanet.depth = ship.depth - 1;
 
   var plmaxcol = 120;
@@ -169,16 +247,6 @@ function hmplt(){
   var roundedenergy = map(energylvl,0,plmaxcol,0,100);
   var roundedwater = map(waterlvl,0,plmaxcol,0,100);
   var roundedplants = map(plantslvl,0,plmaxcol,0,100);
-
-  if(roundedenergy > 95){
-    roundedenergy = 100;
-  }
-  if(roundedwater > 95){
-    roundedwater = 100;
-  }
-  if(roundedplants > 95){
-    roundedplants = 100;
-  }
 
   fill(255);
   textFont("Copperplate");
@@ -270,7 +338,7 @@ function spawnPlanets(){
    switch(i){
     case 0:
       createplanets.setCollider("circle",0,0,290);  
-      spawncollectables(2,0,0,0,0);
+      spawncollectables(3,3,0,3,0);
       oxylvl = 60;
       fullvl = 85;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -712,16 +780,23 @@ function movecollectables(){
          collft[i].destroy();
           waterlvl += 40;
           localStorage.setItem('col'+i, 2);
+          localStorage.setItem('waterlvl',waterlvl);
         }
        if(type === "energy"){
           collft[i].destroy();
           energylvl += 40;
           localStorage.setItem('col'+i, 3);
+          localStorage.setItem('energylvl',energylvl);
         }
         if(type === "plants"){
           collft[i].destroy();
           localStorage.setItem('col'+i, 4);
           plantslvl += 40;
+          localStorage.removeItem('plantslvl');
+          if(localStorage.getItem('plantslvl') === null){
+            localStorage.setItem('plantslvl',0);
+          }
+          localStorage.setItem('plantslvl',plantslvl);
         }
       }
       if(localStorage.getItem('col'+i) === null){
@@ -848,7 +923,6 @@ function bg(number){
     for(j = 0; j < planets.length; j += 3){
       star.depth = planets[j].depth - 1
     }
-    console.log(w + ", " + h);
     bga.push(star);
   }
 }
