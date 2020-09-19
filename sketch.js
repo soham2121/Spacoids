@@ -1,7 +1,7 @@
 var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed = false, restart, rb, homeplanetimg = [], curtime = [];
 var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "play", bga = [];
 var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
-var button2, moonimg, moonarr = [], starimg, asster = [], getp, gete, getw, plvl = 0, getlvl;
+var button2, moonimg, moonarr = [], starimg, asster = [], getp, gete, getw, plvl = 0, getlvl, compass, compassimg, nd = null, cp;
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -18,7 +18,9 @@ function preload(){
 
   starimg = loadImage("sprites/star.png");
 
-  for(var i = 1; i <= 3; i++){
+  compassimg = loadImage("sprites/compass.png");
+
+  for(var i = 1; i < 4; i++){
     var hmpltimg = loadImage("sprites/prt" + i + ".png");
     homeplanetimg.push(hmpltimg);
   }
@@ -66,6 +68,11 @@ function setup() {
   rb.shapeColor = ('rgba(255,0,0,0.5)');
   rb.depth = ship.depth - 1;
   rb.visible = false;
+
+  compass = createSprite(0,0,10,10);
+  compass.addImage("compass", compassimg);
+  compass.depth = ship.depth - 1;
+  compass.scale = 1.5;
 
   frameRate(60);
 
@@ -128,6 +135,7 @@ function draw(){
       movebg();
       hmplt();
       mm(4,0);mm(4,3);mm(5,6);
+      movecompass();
     }
   }
   if(gameState === "survival"){
@@ -183,8 +191,6 @@ function hmplt(){
 
   ship.collide(homeplanet);
 
-  homeplanet.addImage("plntprt"+plvl,homeplanetimg[plvl]);
-
   if(getlvl < plvl){
     getlvl = plvl;
     localStorage.setItem('level',plvl);
@@ -195,9 +201,11 @@ function hmplt(){
 
   if(parseInt(plvl) === 1){
     homeplanet.setCollider("circle",-13,45,457);
+    homeplanet.addImage("plntprt1",homeplanetimg[1]);
   }
-  if(parseInt(plvl) === 0 || parseInt(plvl) === 2){
-    homeplanet.setCollider("circle",0,0,455);
+  if(parseInt(plvl) === 2){
+    homeplanet.addImage("plntprt1",homeplanetimg[2]);
+    homeplanet.setCollider("circle",-10,0,455);
   }
 
   if(energylvl > 95 && plantslvl > 95 && waterlvl > 95){
@@ -270,6 +278,9 @@ function player(){
 
   ship.rotation = shipa;
 
+  compass.x = ship.x;
+  compass.y = ship.y;
+
   if(fuellvl > 0){
 
   //right rotation
@@ -284,7 +295,7 @@ function player(){
 
   //thrust
   if(keyIsDown(UP_ARROW) || keyIsDown(87) || keyIsDown(32)){
-    ship.setSpeed(15, shipa - 90);
+    ship.setSpeed(10, shipa - 90);
   }
   else{
     ship.setSpeed(0, shipa);
@@ -338,7 +349,7 @@ function spawnPlanets(){
    switch(i){
     case 0:
       createplanets.setCollider("circle",0,0,290);  
-      spawncollectables(3,3,0,3,0);
+      spawncollectables(2,0,0,0,0);
       oxylvl = 60;
       fullvl = 85;
       plntscollvls.push({oxy: oxylvl, ful: fullvl, maxoxy: oxylvl, maxful: fullvl, regen: 0, regentime: [{hour: 0, min: 0, sec: 0}]});
@@ -469,6 +480,12 @@ function allmovement(){
         localStorage.setItem(i+'planetregen',1)
         console.log(localStorage.getItem(i+'planetregen'));
       }
+    }
+    if(localStorage.getItem(i+'dis') === null){
+      localStorage.setItem(i+'dis',0);
+    }
+    if(ship.collide(planets[i])){
+      localStorage.setItem(i+'dis',1)
     }
     if(localStorage.getItem(i+'planetregen') > 0){
       var sec = localStorage.getItem(i+'planetsec');
@@ -819,7 +836,7 @@ function oxynful() {
   }
 
   if(frameCount % 6 === 0){
-    //oxygenlvl -= 0.2;
+    oxygenlvl -= 0.2;
   }
 
   if(oxygenlvl <= 0){
@@ -953,3 +970,20 @@ function movebg(){
 // function spawnastroids(number){
 //   for(var i = 0; )
 // }
+
+function movecompass(){
+  for(var i = 0; i < planets.length; i+=3){
+    var getdis = parseInt(localStorage.getItem(i+'dis'))
+    if(getdis === 0){
+      var x = Math.abs(ship.x - planets[i].x);
+      var y = Math.abs(ship.y - planets[i].y);
+      var dist = Math.sqrt((Math.pow(x,2)+Math.pow(y,2)));
+      if(nd === null || dist < nd){
+        nd = dist;
+        cp = i;
+      }
+    }
+    let angle = atan2(ship.y - planets[cp].y, ship.x - planets[cp].x);
+    compass.rotation = angle - 120;
+  }
+}
