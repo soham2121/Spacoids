@@ -2,7 +2,7 @@ var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed 
 var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "mainmenu", bga = [];
 var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
 var button2, moonimg, moonarr = [], starimg, asster = [], getp, gete, getw, plvl = 0, getlvl, compass, compassimg, nd = null, cp;
-var spl = [], sps = [], timer = 0, gettimeforsurvival;
+var spl = [], sps = [], timer = 0, gettimeforsurvival, collideindex = 0;
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -160,7 +160,7 @@ function draw(){
   if(gameState === "survival"){
     homeplanet.visible = false;
     hometrig.visible = false;
-    if(frameCount % 190 === 0){
+    if(frameCount % 190 === 0 && collideindex === 0){
       survival();
     }
     player();
@@ -1035,17 +1035,11 @@ function survival(){
       sp.scale = 0.75;
       var trig = createSprite(0,0,1,1);
       trig.setCollider("circle",0,0,440);
-      var ra = random(0,359);
-      var rx = random(3400,4400);
-      var ry = random(2728,3728);
-      if(sp.length > 0){
-        sp.x = sp[sp.length-2] + ship.x + cos(ra) * (rx) + displayWidth;
-        sp.y = sp[sp.length-2] + ship.y + cos(ra) * (ry) + displayHeight;
-      }
-      else{
-        sp.x = displayWidth + ship.x + cos(ra) * (rx);
-        sp.y = displayHeight + ship.y + cos(ra) * (ry);
-      }
+      var rx = random(-6400,6400);
+      var ry = random(-5728,5728);
+
+      sp.x = ship.x + rx;
+      sp.y = ship.y + ry;
       
       sp.depth = restart.depth - 1;
       var i = Math.round(random(1,17));
@@ -1162,12 +1156,25 @@ function survival(){
 
 function movesp(){
   for(var i = 0; i < spl.length; i+=2){
+    for(var j = 0; j < spl.length; j+=2){
+      if(spl[i].collide(spl[j])){
+        if(i < j){
+          spl[j].destroy();
+          spl.splice(j,2);
+        }
+        if(i > j){
+          spl[i].destroy();
+          spl.splice(i,2);
+        }
+      }
+    }
+  
     if(ship.collide(spl[i])){
-      if(oxygenlvl < 95 && sps[i] > 0){
+      if(oxygenlvl < 100 && sps[i] > 0){
         sps[i] -= 1;
         oxygenlvl += 1;
       }
-      if(fuellvl < 95 && sps[i+1] > 0){
+      if(fuellvl < 100 && sps[i+1] > 0){
         sps[i+1] -= 1;
         fuellvl += 1;
       }
