@@ -1,7 +1,8 @@
 var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed = false, restart, rb, homeplanetimg = [], curtime = [];
-var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "play", bga = [];
+var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "mainmenu", bga = [];
 var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
 var button2, moonimg, moonarr = [], starimg, asster = [], getp, gete, getw, plvl = 0, getlvl, compass, compassimg, nd = null, cp;
+var spl = [], sps = [], timer = 0, gettimeforsurvival;
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -61,6 +62,7 @@ function setup() {
   button1.visible = false;
 
   button2 = createSprite(ship.x, ship.y, 200, 50);
+  button2.shapeColor = rgb(20,25,255);
   button2.depth = ship.depth + 1;
   button2.visible = false;
 
@@ -86,10 +88,13 @@ function setup() {
     localStorage.setItem('plantslvl',0);
   }
 
-
   gete = localStorage.getItem('energylvl');
   getw = localStorage.getItem('waterlvl');
   getp = localStorage.getItem('plantslvl');
+
+  if(localStorage.getItem('besttime') === null){
+    localStorage.setItem('besttime', 0);
+  }
 }
 
 function draw(){
@@ -97,6 +102,11 @@ function draw(){
   drawSprites();
 
   movecollectables();
+  movebg();
+
+  if(frameCount === 1 && gameState != "mainmenu"){
+    bg(50);
+  }
 
   if(gameState === "mainmenu"){
     if(frameCount === 1){
@@ -107,24 +117,34 @@ function draw(){
     ship.collide(homeplanet)
     player();
     button1.visible = true;
+    button2.visible = true;
     homeplanet.depth = ship.depth - 1;
     button1.x = homeplanet.x - 400;
     button1.y = homeplanet.y - 100;
+    button2.x = homeplanet.x + 400;
+    button2.y = homeplanet.y - 100;
     textFont('Copperplate');
     textSize(20);
-    text("Play", button1.x - 20, button1.y + 5);
+    fill(255);
+    text("Play classic", button1.x - 40, button1.y + 5);
+    text("Play survival", button2.x - 40, button2.y + 5);
     if(ship.collide(button1) || mousePressedOver(button1)){
       frameCount = 0;
       button1.visible = false;
+      button2.visible = false;
       gameState = "play";
+    }
+    if(ship.collide(button2) || mousePressedOver(button2)){
+      frameCount = 0;
+      button1.visible = false;
+      button2.visible = false;
+      gameState = "survival";
     }
   }
   if(gameState === "play"){
     if(frameCount === 1){
       spawnPlanets();
-      bg(50);
       spawnmoon(3);
-      console.log(homeplanetimg);
     }
     if(frameCount > 1){
       player();
@@ -132,14 +152,30 @@ function draw(){
       allmovement();
       hideplanets();
       oxynful();
-      movebg();
       hmplt();
       mm(4,0);mm(4,3);mm(5,6);
       movecompass();
     }
   }
   if(gameState === "survival"){
-
+    homeplanet.visible = false;
+    hometrig.visible = false;
+    if(frameCount % 190 === 0){
+      survival();
+    }
+    player();
+    movesp();
+    oxynful();
+    if(frameCount % 60 === 0){
+      timer++;
+    }
+    fill(255);
+    text("Time: " + timer + "s", ship.x - displayWidth/2 + 50, ship.y - 300);
+    gettimeforsurvival = localStorage.getItem('besttime');
+    text("Best Time: " + gettimeforsurvival + "s", ship.x - 110, ship.y - 300);
+    if(timer > gettimeforsurvival){
+      localStorage.setItem('besttime',timer);
+    }
   }
   else if(gameState === "end"){
     fill(255);
@@ -156,7 +192,7 @@ function draw(){
     restart.x = ship.x;
     restart.y = ship.y - 100;
     if(mousePressedOver(restart)){
-      gameState = "play";
+      gameState = "mainmenu";
       reset();
     }
   }
@@ -322,10 +358,13 @@ function player(){
     shipa = 0;
   }
 
-  textSize(30)
-  textFont("Copperplate");
-  fill("white");
-  text("x: " + Math.round(ship.x) + " y: " + Math.round(ship.y), ship.x - 100, ship.y - 300);
+  textSize(30);
+
+  if(gameState === "play"){
+    textFont("Copperplate");
+    fill("white");
+    text("x: " + Math.round(ship.x) + " y: " + Math.round(ship.y), ship.x - 100, ship.y - 300);
+  }
 }
 
 function spawnPlanets(){ 
@@ -333,7 +372,7 @@ function spawnPlanets(){
    var createplanets = createSprite(200,200,200,200);
    createplanets.depth = rb.depth - 1;
    if(i<17){
-   var imgi = i + 1;
+    var imgi = i + 1;
    }
    var thisplanetimg = loadImage("sprites/" + imgi + ".png")
    createplanets.addImage("planet "+ i, thisplanetimg);
@@ -885,6 +924,8 @@ function oxynful() {
 
 function reset(){
   collft = [];
+  spl = [];
+  sps = [];
   oxygenlvl = 100;
   fuellvl = 101;
   rb.visible = false;
@@ -984,6 +1025,183 @@ function movecompass(){
       }
     }
     let angle = atan2(ship.y - planets[cp].y, ship.x - planets[cp].x);
+    compass.rotation = angle - 120;
+  }
+}
+
+function survival(){
+      var sp = createSprite(0,0,1,1);
+      ship.depth = sp.depth + 1;
+      sp.scale = 0.75;
+      var trig = createSprite(0,0,1,1);
+      trig.setCollider("circle",0,0,440);
+      var ra = random(0,359);
+      var rx = random(3400,4400);
+      var ry = random(2728,3728);
+      if(sp.length > 0){
+        sp.x = sp[sp.length-2] + ship.x + cos(ra) * (rx) + displayWidth;
+        sp.y = sp[sp.length-2] + ship.y + cos(ra) * (ry) + displayHeight;
+      }
+      else{
+        sp.x = displayWidth + ship.x + cos(ra) * (rx);
+        sp.y = displayHeight + ship.y + cos(ra) * (ry);
+      }
+      
+      sp.depth = restart.depth - 1;
+      var i = Math.round(random(1,17));
+      var thisplanetimg = loadImage("sprites/" + i + ".png")
+      sp.addImage("planet "+ i, thisplanetimg);
+      spl.push(sp, trig);
+      var oxylvl, fullvl;
+      switch(i){
+        case 1:
+          sp.setCollider("circle",0,0,290);
+          oxylvl = 60;
+          fullvl = 85;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 2:
+          sp.setCollider("circle",0,0,340);
+          oxylvl = 85;
+          fullvl = 100;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 3:
+          sp.setCollider("circle",0,0,345);
+          oxylvl = 100;
+          fullvl = 120;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 4:
+          sp.setCollider("circle",0,0,195);
+          sp.scale = 1.25;
+          oxylvl = 120;
+          fullvl = 140;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 5:
+          sp.setCollider("circle",0,0,340);
+          oxylvl = 135;
+          fullvl = 150;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 6:
+          sp.setCollider("circle",0,-13,245);
+          oxylvl = 150;
+          fullvl = 160;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 7:
+          sp.setCollider("circle",0,0,295);
+          oxylvl = 250;
+          fullvl = 205;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 8:
+          sp.setCollider("circle",-25,20,330);
+          oxylvl = 280;
+          fullvl = 235;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 9:
+          sp.setCollider("circle",35,-15,330);
+          oxylvl = 300;
+          fullvl = 350;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 10:
+          sp.setCollider("circle",-45,-15,330);
+          oxylvl = 315;
+          fullvl = 400;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 11:
+          sp.setCollider("circle",0,0,275);
+          oxylvl = 340;
+          fullvl = 360;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 12:
+          sp.setCollider("circle",0,10,325);
+          oxylvl = 400;
+          fullvl = 410;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 13:
+          sp.setCollider("circle",0,0,325);
+          oxylvl = 420;
+          fullvl = 430;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 14:
+          sp.setCollider("circle",0,0,325);
+          oxylvl = 430;
+          fullvl = 430;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 15:
+          sp.setCollider("circle",-20,0,325);
+          oxylvl = 437;
+          fullvl = 442;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 16:
+          sp.setCollider("circle",0,0,325);
+          oxylvl = 442;
+          fullvl = 450;
+          sps.push(oxylvl, fullvl);
+          break;
+        case 17:
+          sp.setCollider("circle",-33,-13,333);
+          oxylvl = 450;
+          fullvl = 461;
+          sps.push(oxylvl, fullvl);
+          break;
+      }
+}
+
+function movesp(){
+  for(var i = 0; i < spl.length; i+=2){
+    if(ship.collide(spl[i])){
+      if(oxygenlvl < 95 && sps[i] > 0){
+        sps[i] -= 1;
+        oxygenlvl += 1;
+      }
+      if(fuellvl < 95 && sps[i+1] > 0){
+        sps[i+1] -= 1;
+        fuellvl += 1;
+      }
+    }
+    ship.collide(spl[i]);
+    spl[i+1].debug = true;
+    spl[i+1].x = spl[i].x;
+    spl[i+1].y = spl[i].y;
+    if(ship.isTouching(spl[i+1])){
+      if(keyIsDown(UP_ARROW) === false){
+        ship.attractionPoint(2,spl[i].x,spl[i].y);
+      }
+    }
+    else {
+      ship.attractionPoint(0,spl[i].x, spl[i].y);
+    }
+
+    var o = sps[i];
+    var f = sps[i+1];
+    textFont('Copperplate');
+    fill(0);
+    text("Oxygen: " + o + "%", spl[i].x - 90, spl[i].y - 20);
+    text("Fuel: " + f + "%", spl[i].x - 70, spl[i].y + 20);
+  }
+
+  for(var i = 0; i < spl.length; i+=2){
+    var x = Math.abs(ship.x - spl[i].x);
+    var y = Math.abs(ship.y - spl[i].y);
+    var dist = Math.sqrt((Math.pow(x,2)+Math.pow(y,2)));
+    if(nd === null || dist < nd){
+      nd = dist;
+      cp = i;
+    }
+    let angle = atan2(ship.y - spl[cp].y, ship.x - spl[cp].x);
     compass.rotation = angle - 120;
   }
 }
