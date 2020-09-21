@@ -2,7 +2,7 @@ var ship, shipa = 0, shipimg, homeplanet, planets = [], collft = [], isfpressed 
 var oxygenlvl = 100, fuellvl = 101, lastshipposx = 0, lastshipposy = 0, shipr = 0, plantimg, waterimg, gameState = "mainmenu", bga = [];
 var oxyimg, energyimg, hometrig, energylvl = 0, waterlvl = 0, plantslvl = 0, plntscollvls = [], maxfuel = 85, maxoxygen = 80, button1;
 var button2, moonimg, moonarr = [], starimg, asster = [], getp, gete, getw, plvl = 0, getlvl, compass, compassimg, nd = null, cp;
-var spl = [], sps = [], timer = 0, gettimeforsurvival, collideindex = 0;
+var spl = [], sps = [], timer = 0, gettimeforsurvival, pause, pausestate = false;
 
 function preload(){
   shipimg = loadImage("sprites/ship.png");
@@ -75,6 +75,9 @@ function setup() {
   compass.addImage("compass", compassimg);
   compass.depth = ship.depth - 1;
   compass.scale = 1.5;
+
+  pause = createSprite(0,0,50,50);
+  pause.visible = false;
 
   frameRate(60);
 
@@ -154,25 +157,26 @@ function draw(){
       oxynful();
       hmplt();
       mm(4,0);mm(4,3);mm(5,6);
-      movecompass();
+     // movecompass();
     }
   }
   if(gameState === "survival"){
     homeplanet.visible = false;
     hometrig.visible = false;
-    if(frameCount % 190 === 0 && collideindex === 0){
+    if(frameCount % 190 === 0 && pausestate === false){
       survival();
     }
     player();
     movesp();
+    pausegame();
     oxynful();
-    if(frameCount % 60 === 0){
+    if(frameCount % 60 === 0 && pausestate === false){
       timer++;
     }
     fill(255);
-    text("Time: " + timer + "s", ship.x - displayWidth/2 + 50, ship.y - 300);
+    text("Time: " + timer + "s", ship.x - 50, ship.y - 300);
     gettimeforsurvival = localStorage.getItem('besttime');
-    text("Best Time: " + gettimeforsurvival + "s", ship.x - 110, ship.y - 300);
+    text("Best Time: " + gettimeforsurvival + "s", ship.x + displayWidth/4 + 130, ship.y - 300);
     if(timer > gettimeforsurvival){
       localStorage.setItem('besttime',timer);
     }
@@ -317,7 +321,7 @@ function player(){
   compass.x = ship.x;
   compass.y = ship.y;
 
-  if(fuellvl > 0){
+  if(fuellvl > 0 && pausestate === false){
 
   //right rotation
   if(keyIsDown(RIGHT_ARROW) || keyIsDown(68)){
@@ -868,14 +872,16 @@ function movecollectables(){
 }
 
 function oxynful() {
-  if(Math.round(ship.x) != Math.round(lastshipposx) || Math.round(ship.y) != Math.round(lastshipposy)){
-    fuellvl -= 0.035;
-    lastshipposx = ship.x;
-    lastshipposy = ship.y;
-  }
+  if(pausestate === false){
+    if(Math.round(ship.x) != Math.round(lastshipposx) || Math.round(ship.y) != Math.round(lastshipposy)){
+      fuellvl -= 0.035;
+      lastshipposx = ship.x;
+      lastshipposy = ship.y;
+    }
 
-  if(frameCount % 6 === 0){
-    oxygenlvl -= 0.2;
+    if(frameCount % 6 === 0){
+      oxygenlvl -= 0.2;
+    }
   }
 
   if(oxygenlvl <= 0){
@@ -1012,22 +1018,24 @@ function movebg(){
 //   for(var i = 0; )
 // }
 
-function movecompass(){
-  for(var i = 0; i < planets.length; i+=3){
-    var getdis = parseInt(localStorage.getItem(i+'dis'))
-    if(getdis === 0){
-      var x = Math.abs(ship.x - planets[i].x);
-      var y = Math.abs(ship.y - planets[i].y);
-      var dist = Math.sqrt((Math.pow(x,2)+Math.pow(y,2)));
-      if(nd === null || dist < nd){
-        nd = dist;
-        cp = i;
-      }
-    }
-    let angle = atan2(ship.y - planets[cp].y, ship.x - planets[cp].x);
-    compass.rotation = angle - 120;
-  }
-}
+// function movecompass(){
+//   if(frameCount > 5){
+//   for(var i = 0; i < planets.length; i+=3){
+//     var getdis = parseInt(localStorage.getItem(i+'dis'))
+//     if(getdis === 0){
+//       var x = Math.abs(ship.x - planets[i].x);
+//       var y = Math.abs(ship.y - planets[i].y);
+//       var dist = Math.sqrt((Math.pow(x,2)+Math.pow(y,2)));
+//       if(nd === null || dist < nd){
+//         nd = dist;
+//         cp = i;
+//       }
+//     }
+//     let angle = atan2(ship.y - planets[0].y, ship.x - planets[0].x);
+//     compass.rotation = angle - 120;
+//   }
+//   }
+// }
 
 function survival(){
       var sp = createSprite(0,0,1,1);
@@ -1210,5 +1218,27 @@ function movesp(){
     }
     let angle = atan2(ship.y - spl[cp].y, ship.x - spl[cp].x);
     compass.rotation = angle - 120;
+  }
+}
+
+function pausegame(){
+  pause.visible = true;
+  pause.x = ship.x - displayWidth/3-200;
+  pause.y = ship.y - displayHeight/3-30;
+  if(mousePressedOver(pause)){
+    rb.visible = true;
+    pausestate = true;
+    rb.shapeColor = ('rgba(151,151,151,0.2)');
+    rb.x = ship.x;
+    rb.y = ship.y;
+  }
+  else if(mousePressedOver(rb)){
+    pausestate = false;
+    rb.visible = false;
+    rb.shapeColor = ('rgba(255,0,0,0.5)');
+  }
+  if(pausestate === true){
+    fill(255);
+    text("Paused", ship.x - 50, ship.y - 100);
   }
 }
